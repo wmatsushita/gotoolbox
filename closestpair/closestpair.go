@@ -7,8 +7,8 @@ import (
 )
 
 type point struct {
-	x int
-	y int
+	x float64
+	y float64
 }
 
 func (p1 point) distance(p2 point) (dist float64) {
@@ -18,8 +18,9 @@ func (p1 point) distance(p2 point) (dist float64) {
 }
 
 type pair struct {
-	points []point
-	dist   float64
+	p1   point
+	p2   point
+	dist float64
 }
 
 func minDistPairs(p1, p2 pair) pair {
@@ -76,14 +77,15 @@ func sortPointsByAxis(points []point, isX bool) (sorted []point) {
 
 }
 
-func bruteForceClosestPair(points []point) (pair pair) {
+func BruteForceClosestPair(points []point) (pair pair) {
 	pair.dist = math.MaxFloat64
 	for i := 0; i < len(points); i++ {
 		for j := i + 1; j < len(points); j++ {
 			dist := points[i].distance(points[j])
 			if dist < pair.dist {
 				pair.dist = dist
-				pair.points = []point{points[i], points[j]}
+				pair.p1 = points[i]
+				pair.p2 =  points[j]
 			}
 		}
 	}
@@ -121,7 +123,7 @@ func splitPoints(pointsX, pointsY []point) (leftX, rightX, leftY, rightY []point
 func closestPairRecursion(pointsX, pointsY []point) pair {
 	// base case, using pointsX or pointsY makes no difference
 	if len(pointsX) <= 3 {
-		return bruteForceClosestPair(pointsX)
+		return BruteForceClosestPair(pointsX)
 	}
 
 	leftX, rightX, leftY, rightY := splitPoints(pointsX, pointsY)
@@ -136,15 +138,31 @@ func closestPairRecursion(pointsX, pointsY []point) pair {
 
 }
 
-func closestSplitPair(pointsX, pointsY []point, delta pair) pair {
+func closestSplitPair(pointsX, pointsY []point, delta pair) (closest pair) {
 	divide := len(pointsX)/2 - 1
 	center := pointsX[divide].x
 	remaining := []point{}
+
 	for _, p := range pointsY {
 		if math.Abs(p.x-center) < delta.dist {
 			remaining = append(remaining, p)
 		}
 	}
+
+	closest.dist = math.MaxFloat64
+	for i := range remaining {
+		for j := i + 1; j < i+8 && j < len(remaining); j++ {
+			closest = minDistPairs(closest,
+				pair{
+
+					p1: remaining[i],
+					p2: remaining[j],
+					dist: remaining[i].distance(remaining[j]),
+				})
+		}
+	}
+
+	return
 
 }
 
@@ -171,7 +189,8 @@ func main() {
 	fmt.Println(points[1].distance(points[3]))
 	fmt.Println(points[2].distance(points[3]))
 
-	fmt.Println(bruteForceClosestPair(points))
+	fmt.Println(BruteForceClosestPair(points))
+	fmt.Println(ClosestPair(points))
 
 	fmt.Println(ClosestPair(points))
 
